@@ -1,8 +1,8 @@
 #include "seq_song.h"
 #include "seq_mel.h"
 #include <MIDI.h>
-#include <EEPROM.h>
 #include <LittleFS.h>
+#include "storage.h"
 #include "hardware.h"
 #include "midi_handler.h"
 #include "clock_engine.h"
@@ -13,7 +13,7 @@ extern MelodicSequencer melSeq;
 void SongSequencer::begin() {
     initArrays();
     
-    if (!LittleFS.begin(true)) {
+    if (!files_mount()) {
         // Fallback
     }
     
@@ -510,7 +510,7 @@ void SongSequencer::toggleMute(uint8_t step) {
 bool SongSequencer::saveToFile(uint8_t slot) {
     if (slot >= MAX_SONGS) return false;
     
-    if (!LittleFS.begin(true)) return false;
+    if (!files_mount()) return false;
     
     if (!LittleFS.exists(SONG_DIR)) {
         LittleFS.mkdir(SONG_DIR);
@@ -538,7 +538,7 @@ bool SongSequencer::saveToFile(uint8_t slot) {
 bool SongSequencer::loadFromFile(uint8_t slot) {
     if (slot >= MAX_SONGS) return false;
     
-    if (!LittleFS.begin(true)) return false;
+    if (!files_mount()) return false;
     
     char path[32];
     snprintf(path, sizeof(path), SONG_DIR "/song_%02d.bin", slot);

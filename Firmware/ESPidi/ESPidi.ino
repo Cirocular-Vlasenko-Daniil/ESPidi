@@ -7,6 +7,11 @@
 #include "seq_mel.h"
 #include "seq_song.h"
 #include "engine.h"
+#include <ESPidiHub.h>
+#include "cover.h"
+
+// Описание для ESPidi HUB: имя, версия и обложка на экране запуска слота
+ESPIDI_FIRMWARE("espidi_ex", "ESPIDI", "2 rebuilt hub", "E. Carlo, R. Mazavin");
 
 extern Arpeggiator arp;
 extern MelodicSequencer melSeq;
@@ -67,5 +72,6 @@ void loop() {
         ui_drawScreen();  // рисуем кадр в буфер
     }
     ui_present();         // и отправляем на дисплей, не задерживая такты
+    serviceHubExit();     // SETTINGS → HUB
     delay(1);             // отдать процессор задачам с низшим приоритетом (USB, сторожевой таймер)
 }

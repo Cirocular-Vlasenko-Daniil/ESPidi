@@ -1,0 +1,4 @@
+out/
+.espidi-hub/
+ESPidi/build/
+.DS_Store

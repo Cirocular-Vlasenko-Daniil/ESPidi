@@ -1,20 +1,23 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define SDA_PIN     8
-#define SCL_PIN     9
-#define ENC_A       6
-#define ENC_B       5
-#define ENC_BTN     4
-#define BTN_L_R     3
-#define BTN_TAP     2
-#define BTN_PLAY    1
-#define MIDI_RX     7
-#define MIDI_TX     10
+#include <ESPidiHub.h>
 
-#define OLED_WIDTH  128
-#define OLED_HEIGHT 32
-#define OLED_ADDR   0x3C
+// Карта пинов ESPidi — из SDK ESPidi HUB
+#define SDA_PIN     espidi::pin::OLED_SDA
+#define SCL_PIN     espidi::pin::OLED_SCL
+#define ENC_A       espidi::pin::ENC_A
+#define ENC_B       espidi::pin::ENC_B
+#define ENC_BTN     espidi::pin::ENC_SW
+#define BTN_L_R     espidi::pin::PAGE
+#define BTN_TAP     espidi::pin::TAP
+#define BTN_PLAY    espidi::pin::PLAY
+#define MIDI_RX     espidi::pin::MIDI_RX
+#define MIDI_TX     espidi::pin::MIDI_TX
+
+#define OLED_WIDTH  espidi::OLED_WIDTH
+#define OLED_HEIGHT espidi::OLED_HEIGHT
+#define OLED_ADDR   espidi::OLED_ADDR
 
 #define MAX_HELD_NOTES 8
 
@@ -38,6 +41,6 @@
 
 #define VISIBLE_ROWS 3
 #define MAX_PATTERNS 64
-#define PATTERN_DIR "/patterns"
+#define PATTERN_DIR "/espidi_ex/patterns"   // FW_DIR из storage.h
 
 #endif

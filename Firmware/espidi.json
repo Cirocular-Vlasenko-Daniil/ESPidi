@@ -1,0 +1,10 @@
+{
+  "espidi": 1,
+  "sketch": "ESPidi",
+  "firmware": "hub/ESPidi.ino.bin",
+  "cover": "cover.png",
+  "summary": {
+    "en": "Eugene Carlo's ESPidi_2 firmware with Ruslan Mazavin's fixes (ESPidi-rebuilt): arpeggiator, melodic and song sequencers, MIDI monitor, steady MIDI clock. Settings → HUB returns to the HUB.",
+    "ru": "Прошивка ESPidi_2 Евгения Карло с исправлениями Руслана Мазавина (ESPidi-rebuilt): арпеджиатор, мелодический и песенный секвенсоры, MIDI-монитор, ровный MIDI-клок. Settings → HUB — назад в HUB."
+  }
+}

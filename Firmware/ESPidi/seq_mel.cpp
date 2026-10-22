@@ -1,7 +1,7 @@
 #include "seq_mel.h"
 #include <MIDI.h>
-#include <EEPROM.h>
 #include <LittleFS.h>
+#include "storage.h"
 #include "hardware.h"
 #include "midi_handler.h"
 #include "clock_engine.h"
@@ -112,7 +112,7 @@ uint16_t MelodicSequencer::computeNoteLengthTicks(
 
 void MelodicSequencer::begin() {
     initArrays();
-    if (!LittleFS.begin(true)) {
+    if (!files_mount()) {
     }
     editStep = 0;
 }
@@ -669,7 +669,7 @@ void MelodicSequencer::adjustTranspose(uint8_t step, int8_t delta) {
 
 bool MelodicSequencer::saveToFile(uint8_t slot) {
     if (slot >= MAX_PATTERNS) return false;
-    if (!LittleFS.begin(true)) return false;
+    if (!files_mount()) return false;
     if (!LittleFS.exists(PATTERN_DIR)) LittleFS.mkdir(PATTERN_DIR);
 
     char path[32];
@@ -710,7 +710,7 @@ int MelodicSequencer::readPatternFile(uint8_t slot, MelPatternFile& p) {
 #ifdef ESPIDI_TEST
     TH_SCOPE("mel.load");
 #endif
-    if (!LittleFS.begin(true)) return PATFILE_NOFS;
+    if (!files_mount()) return PATFILE_NOFS;
 
     char path[32];
     snprintf(path, sizeof(path), PATTERN_DIR "/pat_%02d.bin", slot);
@@ -855,7 +855,7 @@ bool MelodicSequencer::getStepData(uint8_t patternSlot, uint8_t step,
     bool& outTie, int8_t& outTranspose, uint8_t& outLength) {
 
     if (patternSlot >= MAX_PATTERNS || step >= MAX_SEQ_STEPS) return false;
-    if (!LittleFS.begin(true)) return false;
+    if (!files_mount()) return false;
 
     char path[32];
     snprintf(path, sizeof(path), PATTERN_DIR "/pat_%02d.bin", patternSlot);

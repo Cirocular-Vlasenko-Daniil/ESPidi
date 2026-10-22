@@ -124,7 +124,8 @@ const char* brightNames[] = { "", "1", "2", "3", "4", "5", "6", "7", "8" };
 
 ParamDef settingsRight[] = {
   { "BRIGHT", &settingsApp.params.brightness, 1, 8, brightNames, 9 },
-  { "HELP", nullptr, 0, 0, nullptr, 0 }
+  { "HELP", nullptr, 0, 0, nullptr, 0 },
+  { "HUB", nullptr, 0, 0, nullptr, 0 }   // выход в ESPidi HUB
 };
 
 ParamDef* leftParams = arpLeft;
@@ -1099,8 +1100,8 @@ void ui_handleEncoder(int delta) {
       return;
     }
     
-    // HELP — фиктивный параметр, не редактируется
-    if (strcmp(param.label, "HELP") == 0) {
+    // HELP и HUB — фиктивные параметры, не редактируются
+    if (strcmp(param.label, "HELP") == 0 || strcmp(param.label, "HUB") == 0) {
       return;
     }
     
@@ -1242,6 +1243,10 @@ void ui_handleEncoderPress(bool shortPress) {
       if (realIndex < ((currentCol == COL_LEFT) ? leftParamCount : rightParamCount)) {
         if (strcmp(col[realIndex].label, "HELP") == 0) {
           uiState = UI_HELP;
+          return;
+        }
+        if (strcmp(col[realIndex].label, "HUB") == 0) {
+          requestHubExit();
           return;
         }
         if (strcmp(col[realIndex].label, "SAVE") == 0) {

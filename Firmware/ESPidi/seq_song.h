@@ -8,7 +8,7 @@
 
 #define MAX_SONG_STEPS 64
 #define MAX_SONGS 64
-#define SONG_DIR "/songs"
+#define SONG_DIR "/espidi_ex/songs"   // FW_DIR из storage.h
 
 struct SongStepParams {
     uint8_t patternSlot = 0;    // 0 = пауза, 1-64 = паттерн

@@ -22,6 +22,8 @@ void midi_handleNoteOff(byte channel, byte note, byte velocity);
 void midi_handleCC(byte channel, byte number, byte value);
 void scheduleGlobalSave();
 void checkGlobalSave();
+void requestHubExit();     // SETTINGS → HUB: стоп, сохранение, затем выход в ESPidi HUB
+void serviceHubExit();     // из loop() вне блокировки движка
 void loadAllSettings();
 void midi_handleClock();
 void midi_handleStart();

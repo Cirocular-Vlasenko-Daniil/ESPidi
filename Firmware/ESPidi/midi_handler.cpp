@@ -5,7 +5,7 @@
 #include "midi_monitor.h"
 #include "settings.h"
 #include "clock_engine.h"
-#include <EEPROM.h>
+#include "storage.h"
 #include "ui.h"
 
 Arpeggiator arp;
@@ -35,37 +35,37 @@ void saveAllSettings() {
 #endif
     syncAppsBpmFromGlobal();
     uint8_t appByte = (uint8_t)currentAppType;
-    EEPROM.write(EEPROM_VERSION, EEPROM_LAYOUT_VERSION);
-    EEPROM.put(EEPROM_APP_TYPE, appByte);
-    EEPROM.put(EEPROM_ARP_PARAMS, arp.params);
-    EEPROM.put(EEPROM_SEQ_PARAMS, melSeq.params);
-    EEPROM.put(EEPROM_SEQ_DATA, melSeq.getCurrentPattern());
-    EEPROM.put(EEPROM_SONG_PARAMS, songSeq.params);
-    EEPROM.put(EEPROM_SONG_DATA, songSeq.getCurrentSong());
-    EEPROM.put(EEPROM_SETTINGS, settingsApp.params);
-    EEPROM.commit();
+    settingsStore.write(EEPROM_VERSION, EEPROM_LAYOUT_VERSION);
+    settingsStore.put(EEPROM_APP_TYPE, appByte);
+    settingsStore.put(EEPROM_ARP_PARAMS, arp.params);
+    settingsStore.put(EEPROM_SEQ_PARAMS, melSeq.params);
+    settingsStore.put(EEPROM_SEQ_DATA, melSeq.getCurrentPattern());
+    settingsStore.put(EEPROM_SONG_PARAMS, songSeq.params);
+    settingsStore.put(EEPROM_SONG_DATA, songSeq.getCurrentSong());
+    settingsStore.put(EEPROM_SETTINGS, settingsApp.params);
+    settingsStore.commit();
 #ifdef ESPIDI_TEST
     th_countCommit();
 #endif
 }
 
 void loadAllSettings() {
-    EEPROM.begin(512);
+    settingsStore.begin(512);
 
     // Данные другой раскладки (в т.ч. от прошивок, где блоки перекрывались) не читаем:
     // помечаем область как пустую в памяти — проверки ниже оставят значения по умолчанию.
-    if (EEPROM.read(EEPROM_VERSION) != EEPROM_LAYOUT_VERSION) {
-        for (int i = 0; i < 64; i++) EEPROM.write(i, 0xFF);
+    if (settingsStore.read(EEPROM_VERSION) != EEPROM_LAYOUT_VERSION) {
+        for (int i = 0; i < 64; i++) settingsStore.write(i, 0xFF);
     }
 
     uint8_t appByte;
-    EEPROM.get(EEPROM_APP_TYPE, appByte);
+    settingsStore.get(EEPROM_APP_TYPE, appByte);
     if (appByte < APP_COUNT) {
         currentAppType = (AppType)appByte;
     }
     
     ArpParams arpParams;
-    EEPROM.get(EEPROM_ARP_PARAMS, arpParams);
+    settingsStore.get(EEPROM_ARP_PARAMS, arpParams);
     if (arpParams.bpm >= 40 && arpParams.bpm <= 250 &&
         arpParams.channel >= 1 && arpParams.channel <= 16 &&
         arpParams.mode <= 3 &&
@@ -77,7 +77,7 @@ void loadAllSettings() {
     }
     
     MelSeqParams seqParams;
-    EEPROM.get(EEPROM_SEQ_PARAMS, seqParams);
+    settingsStore.get(EEPROM_SEQ_PARAMS, seqParams);
     if (seqParams.bpm >= 40 && seqParams.bpm <= 250 &&
         seqParams.channel >= 1 && seqParams.channel <= 16 &&
         seqParams.mode <= 3 &&
@@ -93,13 +93,13 @@ void loadAllSettings() {
     }
     
     uint8_t lastPattern = 0;
-    EEPROM.get(EEPROM_SEQ_DATA, lastPattern);
+    settingsStore.get(EEPROM_SEQ_DATA, lastPattern);
     if (lastPattern < MAX_PATTERNS) {
         melSeq.loadFromFile(lastPattern);
     }
     
     SongParams songParams;
-    EEPROM.get(EEPROM_SONG_PARAMS, songParams);
+    settingsStore.get(EEPROM_SONG_PARAMS, songParams);
     if (songParams.bpm >= 40 && songParams.bpm <= 250 &&
         songParams.channel >= 1 && songParams.channel <= 16 &&
         songParams.mode <= 3 &&
@@ -109,13 +109,13 @@ void loadAllSettings() {
     }
     
     uint8_t lastSong = 0;
-    EEPROM.get(EEPROM_SONG_DATA, lastSong);
+    settingsStore.get(EEPROM_SONG_DATA, lastSong);
     if (lastSong < MAX_SONGS) {
         songSeq.loadFromFile(lastSong);
     }
 
     SettingsParams settingsParams;
-    EEPROM.get(EEPROM_SETTINGS, settingsParams);
+    settingsStore.get(EEPROM_SETTINGS, settingsParams);
     if (settingsParams.clockIn <= 1 &&
         settingsParams.clockOut <= 1 &&
         settingsParams.start <= 1 &&
@@ -154,6 +154,28 @@ void checkGlobalSave() {
         saveAllSettings();
         needsSave = false;
     }
+}
+
+static bool hubExitRequested = false;
+
+void requestHubExit() {
+    // Под блокировкой движка: глушим свои ноты и сохраняем всё сразу — после перезагрузки
+    // отложенное сохранение уже не случится.
+    if (arp.isEnabled()) arp.stop();
+    if (melSeq.isEnabled()) melSeq.stop();
+    if (songSeq.isEnabled()) songSeq.stop();
+    saveAllSettings();
+    needsSave = false;
+    hubExitRequested = true;
+}
+
+void serviceHubExit() {
+    if (!hubExitRequested) return;
+    // Даём задаче движка дописать NoteOff из очереди в UART, затем — в HUB.
+    unsigned long t0 = millis();
+    while (midiSerial.queued() > 0 && millis() - t0 < 300) delay(1);
+    delay(5);  // последние байты в аппаратном FIFO (≤ 3 байта ≈ 1 мс)
+    espidi::rebootToHub();
 }
 
 void midi_setup() {
